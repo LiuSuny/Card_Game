@@ -6,25 +6,26 @@ using System.Threading.Tasks;
 
 namespace Card_Game
 {
-    public enum CardRank
-    {
-
-        SIX = 0, SEVEN, EIGHT, NINE, TEN, JACK, QUEEN, KING, ACE
-    }
-
-    public enum CardSuit
-    {
-        HEARTS = 0, DIAMONDS, CLUBS, SPADES
-    }
-
+    
     class Program
     {
         
         static void Main()
         {
-            Game game = new Game(6);
-            while (game.playersTurn()) { }
-            
+            //Create a new game with two players
+             Game game = new Game(2);
+
+            // Start the game
+            game.Start();
+
+            // Play the game until a player wins
+            while (!game.HasWinner())
+            {
+                game.PlayRound();
+            }
+
+            // Display the winner
+            Console.WriteLine($"Player {game.GetWinner()} wins!");
         }
     }
 }

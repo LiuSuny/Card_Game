@@ -9,18 +9,43 @@ namespace Card_Game
 
     public class Card
     {
-        public readonly CardRank rank;
-        public readonly CardSuit suit;
+        public string Suit { get; }
+        public string Rank { get; }
 
-        public Card(CardRank rank, CardSuit suit)
+        public Card(string suit, string rank)
         {
-            this.rank = rank;
-            this.suit = suit;
+            Suit = suit;
+            Rank = rank;
         }
 
-        public override string ToString()
+        public string GetCardDisplay()
         {
-            return $"{rank, 5} {suit, 5}";
+            string suitSymbol = GetSuitSymbol();
+            return $"{Rank} {suitSymbol}";
         }
+        public void DisplayCard()
+        {
+            Console.WriteLine($"┌───────┐");
+            Console.WriteLine($"| {Rank,-2}    |");
+            Console.WriteLine($"|       |");
+            Console.WriteLine($"|   {GetSuitSymbol(),-1}   |");
+            Console.WriteLine($"|       |");
+            Console.WriteLine($"|    {Rank,2} |");
+            Console.WriteLine($"└───────┘");
+        }
+        private string GetSuitSymbol()
+        {
+            switch (Suit)
+            {
+                case "Hearts": return "♥";
+                case "Diamonds": return "♦";
+                case "Clubs": return "♣";
+                case "Spades": return "♠";
+                default: return "";
+            }
+        }
+
+
+
     }
 }

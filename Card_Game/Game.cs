@@ -8,119 +8,92 @@ namespace Card_Game
 {
     public class Game
     {
-        public List<Card> cardDeck;
-        public List<Player> players;
+        private List<Player> players;
+        private Deck deck;
 
-
-        private Random _random;
-        private int _cardsAmount = 36;
-        public Game(int playersCount = 2)
+        public Game(int numPlayers)
         {
-            _random = new Random();
+            if (numPlayers < 2)
+            {
+                throw new ArgumentException("At least two players are required.");
+            }
 
             players = new List<Player>();
-            for (int i = 0; i < playersCount; i++)
+            for (int i = 0; i < numPlayers; i++)
             {
-                players.Add(new Player());
+                players.Add(new Player($"Player {i + 1}"));
             }
 
-            cardDeck = createCardDeck();
-            shuffleCards(cardDeck);
-
-            dealCardsToPlayers(players, cardDeck);
+            deck = new Deck();
         }
 
-        public List<Card> createCardDeck()
+        public void Start()
         {
-            cardDeck = new List<Card>();
-            int suitCount = _cardsAmount / 4; //4
+            // Shuffle the deck
+            deck.Shuffle();
 
-            for (int i = 0; i < suitCount; i++)
+            // Distribute cards to players
+            int playerIndex = 0;
+            foreach (var card in deck.Cards)
             {
-                cardDeck.Add(new Card((CardRank)i, (CardSuit)0));
-                cardDeck.Add(new Card((CardRank)i, (CardSuit)1));
-                cardDeck.Add(new Card((CardRank)i, (CardSuit)2));
-                cardDeck.Add(new Card((CardRank)i, (CardSuit)3));
-            }
-
-            return cardDeck;
-        }
-
-        public void shuffleCards(List<Card> cards)
-        {
-            cards.Sort((a, b) => _random.Next(-2, 2));
-
-        }
-
-        public void dealCardsToPlayers(List<Player> players, List<Card> cards)
-        {
-            int currentPlayer = 0;
-
-            for (int i = 0; i < cards.Count; i++)
-            {
-                players[currentPlayer].cards.Add(cards[i]);
-
-                currentPlayer++;
-                currentPlayer %= players.Count;
+                players[playerIndex].AddCard(card);
+                playerIndex = (playerIndex + 1) % players.Count;
             }
         }
 
-        public bool playersTurn()
+        public void PlayRound()
         {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Players Move:");
-            Console.ResetColor();
-            Console.ForegroundColor = ConsoleColor.Blue;
-            Console.WriteLine("Player:\t Number Of Cards: Card Move:");
-            Console.ResetColor();
-            int maxValue = -1;
-            Player playerWithMaxValue = null;
-            Stack<Card> cardStack = new Stack<Card>();
 
-            for (int i = 0; i < players.Count; i++)
+            List<Card> cardsInPlay = new List<Card>();
+            foreach (var player in players)
             {
-                Player player = players[i];
-
-                if (player.cards.Count > 0)
+                if (player.HasCards())
                 {
-                    Card card = player.cards[_random.Next(player.cards.Count)];
-
-                    Console.WriteLine($"{i}\t{player.cards.Count}\t\t{card}"); //($"{i}\t{player.cards.Count}\t\t{card}")
-                    player.cards.Remove(card);
-
-                    if ((int)card.rank > maxValue)
-                    {
-                        maxValue = (int)card.rank;
-                        playerWithMaxValue = player;
-                 
-                    }
-
-                    cardStack.Push(card);
-
+                    Card card = player.PlayCard();
+                    Console.WriteLine($"{player.Name} plays {card.GetCardDisplay()}");
+                    cardsInPlay.Add(card);
                 }
             }
-            
-            playerWithMaxValue.cards.AddRange(cardStack);
-            Console.ForegroundColor = ConsoleColor.Magenta;
-            Console.WriteLine("*************************************************");
-            Console.WriteLine($"Card Picked up by a player {players.IndexOf(playerWithMaxValue)}");
-            Console.WriteLine("*************************************************");
-            Console.WriteLine("*                                               *");
-            Console.WriteLine("*                                               *");
-            Console.WriteLine("*                                               *");
-            Console.WriteLine("*                                               *");
-            Console.ResetColor();
-            if (playerWithMaxValue.cards.Count == _cardsAmount)
-            {
-                Console.ForegroundColor = ConsoleColor.Cyan;
-                Console.WriteLine($"Player number {players.IndexOf(playerWithMaxValue)} wins");
-                Console.WriteLine("*                                               *");
-                Console.WriteLine("*                                               *");
-                Console.WriteLine("*************************************************");
-                return false;
-            }
 
-            return true;
+            // Check if any player played a card
+            if (cardsInPlay.Any())
+            {
+                // Find the player with the highest card
+                Player winner = players
+                    .Where(p => p.GetTopCard() != null)
+                    .OrderByDescending(p => cardsInPlay.Contains(p.GetTopCard()))
+                    .First();
+
+                // The winner takes all the cards
+                winner.AddCardsToDeck(cardsInPlay);
+
+                // Display the result
+                Console.WriteLine($"{winner.Name} wins the round!");
+                Console.WriteLine($"Player 1 has {players[0].GetCardCount()} cards, Player 2 has {players[1].GetCardCount()} cards");
+                Console.WriteLine();
+            }
+            else
+            {
+                // No cards were played, the game might be over
+                Console.WriteLine("No cards were played. The game might be over.");
+            }
+        }
+
+        public bool HasWinner()
+        {
+            return players.Any(p => p.HasAllCards());
+        }
+
+        public int GetWinner()
+        {
+            for (int i = 0; i < players.Count; i++)
+            {
+                if (players[i].HasAllCards())
+                {
+                    return i + 1;
+                }
+            }
+            return -1; // No winner yet
         }
     }
 }
